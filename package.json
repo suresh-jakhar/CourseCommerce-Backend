@@ -16,5 +16,10 @@
   "bugs": {
     "url": "https://github.com/suresh-jakhar/CourseCommerce-Backend/issues"
   },
-  "homepage": "https://github.com/suresh-jakhar/CourseCommerce-Backend#readme"
+  "homepage": "https://github.com/suresh-jakhar/CourseCommerce-Backend#readme",
+  "dependencies": {
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3",
+    "mongoose": "^9.2.4"
+  }
 }
