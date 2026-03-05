@@ -27,6 +27,7 @@ const courseSchema = new Schema({
     title: String,
     description: String,
     price: Number,
+    imageUrl : String,
     creatorId: mongoose.Schema.Types.ObjectId
 });
 
