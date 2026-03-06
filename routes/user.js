@@ -1,6 +1,11 @@
 const express = require("express");
 const userRouter = express.Router();
 const bcrypt = require("bcrypt");
+require("dotenv").config();
+const jwt = require("jsonwebtoken");
+
+const JWT_SECRET = process.env.JWT_SECRET;
+
 const {userModel, adminModel, courseModel, purchaseModel} = require("../db/db");
 
 const { z } = require("zod");
@@ -86,9 +91,17 @@ userRouter.post("/signin", async function(req, res){
         const passwordMatch = await bcrypt.compare(password, user.password);
 
         if(passwordMatch){
+
+            const token = jwt.sign(
+                { userId: user._id },
+                JWT_SECRET
+            );
+
             res.json({
-                message: "Signin successful"
+                message: "Signin successful",
+                token: token
             });
+
         }else{
             res.status(403).json({
                 message: "Invalid password"
