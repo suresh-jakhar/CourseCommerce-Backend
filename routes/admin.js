@@ -1,7 +1,6 @@
 const express = require("express");
 const adminRouter = express.Router();
-const {userModel, adminModel, courseModel, purchaseModel} = require("./db");
-
+const {userModel, adminModel, courseModel, purchaseModel} = require("../db/db");
 adminRouter.post("/signup", function(req, res){
     res.json({
         message: "signup endpoint"
