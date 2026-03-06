@@ -7,6 +7,7 @@ const jwt = require("jsonwebtoken");
 const JWT_SECRET = process.env.JWT_SECRET;
 
 const {userModel, adminModel, courseModel, purchaseModel} = require("../db/db");
+const { auth } = require("../middleware/auth");
 
 const { z } = require("zod");
 const signupSchema = z.object({
