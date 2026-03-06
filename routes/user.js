@@ -1,13 +1,13 @@
+require("dotenv").config();
 const express = require("express");
 const userRouter = express.Router();
 const bcrypt = require("bcrypt");
-require("dotenv").config();
 const jwt = require("jsonwebtoken");
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const USER_JWT_SECRET = process.env.USER_JWT_SECRET;
 
 const {userModel, adminModel, courseModel, purchaseModel} = require("../db/db");
-const { auth } = require("../middleware/auth");
+const { userAuth } = require("../middleware/userAuth");
 
 const { z } = require("zod");
 const signupSchema = z.object({
@@ -94,8 +94,7 @@ userRouter.post("/signin", async function(req, res){
         if(passwordMatch){
 
             const token = jwt.sign(
-                { userId: user._id },
-                JWT_SECRET
+            { userId: user._id },USER_JWT_SECRET
             );
 
             res.json({
