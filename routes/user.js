@@ -62,34 +62,42 @@ userRouter.post("/signup", async function(req, res){
 
 userRouter.post("/signin", async function(req, res){
 
-    const parsedData = signinSchema.safeParse(req.body);
+    try{
 
-    if(!parsedData.success){
-        return res.status(400).json({
-            message: "Invalid input",
-            errors: parsedData.error.issues
-        });
-    }
+        const parsedData = signinSchema.safeParse(req.body);
 
-    const { email, password } = parsedData.data;
+        if(!parsedData.success){
+            return res.status(400).json({
+                message: "Invalid input",
+                errors: parsedData.error.issues
+            });
+        }
 
-    const user = await userModel.findOne({ email: email });
+        const { email, password } = parsedData.data;
 
-    if(!user){
-        return res.status(403).json({
-            message: "User not found"
-        });
-    }
+        const user = await userModel.findOne({ email });
 
-    const passwordMatch = await bcrypt.compare(password, user.password);
+        if(!user){
+            return res.status(403).json({
+                message: "User not found"
+            });
+        }
 
-    if(passwordMatch){
-        res.json({
-            message: "Signin successful"
-        });
-    }else{
-        res.status(403).json({
-            message: "Invalid password"
+        const passwordMatch = await bcrypt.compare(password, user.password);
+
+        if(passwordMatch){
+            res.json({
+                message: "Signin successful"
+            });
+        }else{
+            res.status(403).json({
+                message: "Invalid password"
+            });
+        }
+
+    }catch(err){
+        res.status(500).json({
+            message: "Signin failed"
         });
     }
 });
