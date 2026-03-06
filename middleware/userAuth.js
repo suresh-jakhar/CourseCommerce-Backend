@@ -4,15 +4,13 @@ const USER_JWT_SECRET = process.env.USER_JWT_SECRET;
 
 function userAuth(req, res, next){
 
-    const authHeader = req.headers.authorization;
+    const token = req.headers.authorization;
 
-    if(!authHeader){
+    if(!token){
         return res.status(401).json({
             message: "Token missing"
         });
     }
-
-    const token = authHeader.split(" ")[1];
 
     try{
 
@@ -27,7 +25,6 @@ function userAuth(req, res, next){
             message: "Invalid user token"
         });
     }
-
 }
 
 module.exports = {

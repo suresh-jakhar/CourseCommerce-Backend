@@ -4,23 +4,13 @@ const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET;
 
 function adminAuth(req, res, next){
 
-    const authHeader = req.headers.authorization;
+    const token = req.headers.authorization;
 
-    if(!authHeader){
+    if(!token){
         return res.status(401).json({
             message: "Token missing"
         });
     }
-
-    const parts = authHeader.split(" ");
-
-    if(parts.length !== 2 || parts[0] !== "Bearer"){
-        return res.status(401).json({
-            message: "Invalid token format"
-        });
-    }
-
-    const token = parts[1];
 
     try{
 
@@ -35,7 +25,6 @@ function adminAuth(req, res, next){
             message: "Invalid admin token"
         });
     }
-
 }
 
 module.exports = {

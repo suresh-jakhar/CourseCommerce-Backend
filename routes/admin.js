@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const adminRouter = express.Router();
 
@@ -101,7 +102,9 @@ adminRouter.post("/signin", async function(req, res){
         if(passwordMatch){
 
             const token = jwt.sign(
-            { adminId: admin._id },ADMIN_JWT_SECRET
+                { adminId: admin._id },
+                ADMIN_JWT_SECRET,
+                { expiresIn: "1d" }
             );
 
             res.json({
@@ -125,10 +128,13 @@ adminRouter.post("/signin", async function(req, res){
 
 
 
-adminRouter.put("/course",adminAuth, function(req,res){
+adminRouter.post("/course", adminAuth, async function(req,res){
+
     res.json({
-        message : "course creation end point"
-    })
+        message : "course creation end point",
+        adminId: req.adminId
+    });
+
 });
 
 adminRouter.get("/course/bulk", function(req,res){
