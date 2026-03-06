@@ -125,7 +125,7 @@ adminRouter.post("/signin", async function(req, res){
 
 
 
-adminRouter.put("/course", function(req,res){
+adminRouter.put("/course",adminAuth, function(req,res){
     res.json({
         message : "course creation end point"
     })
