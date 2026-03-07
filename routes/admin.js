@@ -7,11 +7,11 @@ const jwt = require("jsonwebtoken");
 
 const { z } = require("zod");
 
-const { adminModel } = require("../db/db");
+const { adminModel, courseModel } = require("../db/db");
 const { adminAuth } = require("../middleware/adminAuth");
 
-
 const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET;
+
 
 
 const signupSchema = z.object({
@@ -24,6 +24,13 @@ const signupSchema = z.object({
 const signinSchema = z.object({
     email: z.string().email(),
     password: z.string().min(6)
+});
+
+const courseSchema = z.object({
+    title: z.string().min(3),
+    description: z.string().min(10),
+    price: z.number().positive(),
+    imageUrl: z.string().url()
 });
 
 
@@ -130,17 +137,64 @@ adminRouter.post("/signin", async function(req, res){
 
 adminRouter.post("/course", adminAuth, async function(req,res){
 
-    res.json({
-        message : "course creation end point",
-        adminId: req.adminId
-    });
+    const parsedData = courseSchema.safeParse(req.body);
+
+    if(!parsedData.success){
+        return res.status(400).json({
+            message: "Invalid course input",
+            errors: parsedData.error.issues
+        });
+    }
+
+    try{
+
+        const adminId = req.adminId;
+
+        const { title, description, imageUrl, price } = parsedData.data;
+
+        const course = await courseModel.create({
+            title,
+            description,
+            imageUrl,
+            price,
+            creatorId: adminId
+        });
+
+        res.json({
+            message: "Course created successfully",
+            courseId: course._id
+        });
+
+    }catch(err){
+        res.status(500).json({
+            message: "Error creating course"
+        });
+    }
 
 });
 
-adminRouter.get("/course/bulk", function(req,res){
-    res.json({
-        message : "course bulk end point"
-    })
+
+
+adminRouter.get("/course/bulk", adminAuth, async function(req,res){
+
+    try{
+
+        const adminId = req.adminId;
+
+        const courses = await courseModel.find({
+            creatorId: adminId
+        });
+
+        res.json({
+            courses
+        });
+
+    }catch(err){
+        res.status(500).json({
+            message: "Error fetching courses"
+        });
+    }
+
 });
 
 
