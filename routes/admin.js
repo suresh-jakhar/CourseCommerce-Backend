@@ -219,24 +219,33 @@ adminRouter.put("/course/update/:courseId", adminAuth, async function(req,res){
 
 });
 
-adminRouter.get("/course/bulk", adminAuth, async function(req,res){
+adminRouter.get("/course/bulk", adminAuth, async function(req, res) {
 
-    try{
+    try {
 
         const adminId = req.adminId;
+
+        if (!adminId) {
+            return res.status(401).json({
+                message: "Unauthorized"
+            });
+        }
 
         const courses = await courseModel.find({
             creatorId: adminId
         });
 
         res.json({
+            message: "Courses fetched successfully",
             courses
         });
 
-    }catch(err){
+    } catch (err) {
+
         res.status(500).json({
             message: "Error fetching courses"
         });
+
     }
 
 });
