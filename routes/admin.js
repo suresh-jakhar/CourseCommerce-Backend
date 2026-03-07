@@ -219,6 +219,38 @@ adminRouter.put("/course/update/:courseId", adminAuth, async function(req,res){
 
 });
 
+adminRouter.delete("/course/delete/:courseId", adminAuth, async function(req, res){
+
+    try{
+
+        const adminId = req.adminId;
+        const courseId = req.params.courseId;
+
+        const course = await courseModel.findOne({
+            _id: courseId,
+            creatorId: adminId
+        });
+
+        if(!course){
+            return res.status(403).json({
+                message: "You can delete only your own courses"
+            });
+        }
+
+        await courseModel.deleteOne({ _id: courseId });
+
+        res.json({
+            message: "Course deleted successfully"
+        });
+
+    }catch(err){
+        res.status(500).json({
+            message: "Error deleting course"
+        });
+    }
+
+});
+
 adminRouter.get("/course/bulk", adminAuth, async function(req, res) {
 
     try {
