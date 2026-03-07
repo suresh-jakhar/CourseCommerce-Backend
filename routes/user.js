@@ -6,6 +6,7 @@ const jwt = require("jsonwebtoken");
 
 const USER_JWT_SECRET = process.env.USER_JWT_SECRET;
 
+const mongoose = require("mongoose");
 const { userModel, courseModel, purchaseModel } = require("../db/db");
 const { userAuth } = require("../middleware/userAuth");
 
@@ -144,6 +145,12 @@ userRouter.post("/course/purchase", userAuth, async function(req, res){
 
         const userId = req.userId;
         const { courseId } = parsedData.data;
+
+        if(!mongoose.Types.ObjectId.isValid(courseId)){
+            return res.status(400).json({
+                message: "Invalid course ID"
+            });
+        }
 
         const course = await courseModel.findById(courseId);
 

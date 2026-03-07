@@ -7,6 +7,7 @@ const jwt = require("jsonwebtoken");
 
 const { z } = require("zod");
 
+const mongoose = require("mongoose");
 const { adminModel, courseModel } = require("../db/db");
 const { adminAuth } = require("../middleware/adminAuth");
 
@@ -189,6 +190,12 @@ adminRouter.put("/course/update/:courseId", adminAuth, async function(req,res){
         const adminId = req.adminId;
         const courseId = req.params.courseId;
 
+        if(!mongoose.Types.ObjectId.isValid(courseId)){
+            return res.status(400).json({
+                message: "Invalid course ID"
+            });
+        }
+
         const course = await courseModel.findOne({
             _id: courseId,
             creatorId: adminId
@@ -225,6 +232,12 @@ adminRouter.delete("/course/delete/:courseId", adminAuth, async function(req, re
 
         const adminId = req.adminId;
         const courseId = req.params.courseId;
+
+        if(!mongoose.Types.ObjectId.isValid(courseId)){
+            return res.status(400).json({
+                message: "Invalid course ID"
+            });
+        }
 
         const course = await courseModel.findOne({
             _id: courseId,
