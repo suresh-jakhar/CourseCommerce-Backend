@@ -6,19 +6,26 @@ const jwt = require("jsonwebtoken");
 
 const USER_JWT_SECRET = process.env.USER_JWT_SECRET;
 
-const {userModel, adminModel, courseModel, purchaseModel} = require("../db/db");
+const { userModel, courseModel, purchaseModel } = require("../db/db");
 const { userAuth } = require("../middleware/userAuth");
 
 const { z } = require("zod");
+
+
 const signupSchema = z.object({
     email: z.string().email(),
     password: z.string().min(6),
     firstName: z.string().min(2),
     lastName: z.string().min(2)
 });
+
 const signinSchema = z.object({
     email: z.string().email(),
     password: z.string().min(6)
+});
+
+const purchaseSchema = z.object({
+    courseId: z.string().min(1)
 });
 
 
@@ -63,7 +70,9 @@ userRouter.post("/signup", async function(req, res){
             message: "Error signing up"
         });
     }
+
 });
+
 
 
 userRouter.post("/signin", async function(req, res){
@@ -94,7 +103,9 @@ userRouter.post("/signin", async function(req, res){
         if(passwordMatch){
 
             const token = jwt.sign(
-            { userId: user._id },USER_JWT_SECRET
+                { userId: user._id },
+                USER_JWT_SECRET,
+                { expiresIn: "1d" }
             );
 
             res.json({
@@ -113,14 +124,96 @@ userRouter.post("/signin", async function(req, res){
             message: "Signin failed"
         });
     }
+
 });
 
-userRouter.get("/purchases", userAuth,function(req, res){
-    res.json({
-        message: "purchased courses endpoint"
-    });
+
+
+userRouter.post("/course/purchase", userAuth, async function(req, res){
+
+    const parsedData = purchaseSchema.safeParse(req.body);
+
+    if(!parsedData.success){
+        return res.status(400).json({
+            message: "Invalid input",
+            errors: parsedData.error.issues
+        });
+    }
+
+    try{
+
+        const userId = req.userId;
+        const { courseId } = parsedData.data;
+
+        const course = await courseModel.findById(courseId);
+
+        if(!course){
+            return res.status(404).json({
+                message: "Course not found"
+            });
+        }
+
+        const alreadyPurchased = await purchaseModel.findOne({
+            userId: userId,
+            courseId: courseId
+        });
+
+        if(alreadyPurchased){
+            return res.status(409).json({
+                message: "Course already purchased"
+            });
+        }
+
+        await purchaseModel.create({
+            userId: userId,
+            courseId: courseId
+        });
+
+        res.json({
+            message: "Course purchased successfully"
+        });
+
+    }catch(err){
+        res.status(500).json({
+            message: "Error purchasing course"
+        });
+    }
+
 });
+
+
+
+userRouter.get("/purchases", userAuth, async function(req, res){
+
+    try{
+
+        const userId = req.userId;
+
+        const purchases = await purchaseModel.find({
+            userId: userId
+        });
+
+        const courseIds = purchases.map(p => p.courseId);
+
+        const courses = await courseModel.find({
+            _id: { $in: courseIds }
+        });
+
+        res.json({
+            courses
+        });
+
+    }catch(err){
+
+        res.status(500).json({
+            message: "Error fetching purchases"
+        });
+
+    }
+
+});
+
 
 module.exports = {
-    userRouter : userRouter
+    userRouter
 };
