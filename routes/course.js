@@ -7,10 +7,22 @@ courseRouter.post("/purchase", function(req, res){
     });
 });
 
-courseRouter.get("/preview", function(req, res){
-    res.json({
-        message: "all courses endpoint"
-    });
+courseRouter.get("/preview", async function(req, res){
+
+    try{
+
+        const courses = await courseModel.find({});
+
+        res.json({
+            courses
+        });
+
+    }catch(err){
+        res.status(500).json({
+            message: "Error fetching courses"
+        });
+    }
+
 });
 
 module.exports = {
