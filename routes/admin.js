@@ -135,7 +135,7 @@ adminRouter.post("/signin", async function(req, res){
 
 
 
-adminRouter.post("/course", adminAuth, async function(req,res){
+adminRouter.post("/course/create", adminAuth, async function(req,res){
 
     const parsedData = courseSchema.safeParse(req.body);
 
@@ -150,13 +150,13 @@ adminRouter.post("/course", adminAuth, async function(req,res){
 
         const adminId = req.adminId;
 
-        const { title, description, imageUrl, price } = parsedData.data;
+        const { title, description, price, imageUrl } = parsedData.data;
 
         const course = await courseModel.create({
             title,
             description,
-            imageUrl,
             price,
+            imageUrl,
             creatorId: adminId
         });
 
@@ -173,7 +173,51 @@ adminRouter.post("/course", adminAuth, async function(req,res){
 
 });
 
+adminRouter.put("/course/update/:courseId", adminAuth, async function(req,res){
 
+    const parsedData = courseSchema.safeParse(req.body);
+
+    if(!parsedData.success){
+        return res.status(400).json({
+            message: "Invalid course input",
+            errors: parsedData.error.issues
+        });
+    }
+
+    try{
+
+        const adminId = req.adminId;
+        const courseId = req.params.courseId;
+
+        const course = await courseModel.findOne({
+            _id: courseId,
+            creatorId: adminId
+        });
+
+        if(!course){
+            return res.status(403).json({
+                message: "You can update only your own courses"
+            });
+        }
+
+        const { title, description, price, imageUrl } = parsedData.data;
+
+        await courseModel.updateOne(
+            { _id: courseId },
+            { title, description, price, imageUrl }
+        );
+
+        res.json({
+            message: "Course updated successfully"
+        });
+
+    }catch(err){
+        res.status(500).json({
+            message: "Error updating course"
+        });
+    }
+
+});
 
 adminRouter.get("/course/bulk", adminAuth, async function(req,res){
 
