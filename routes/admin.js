@@ -30,9 +30,13 @@ const signinSchema = z.object({
 const courseSchema = z.object({
     title: z.string().min(3),
     description: z.string().min(10),
-    price: z.number().positive(),
-    imageUrl: z.string().url()
-});
+    price: z.number().min(0),
+    imageUrl: z.string().url(),
+    isFree: z.boolean()
+}).refine(data => {
+    if(!data.isFree && data.price <= 0) return false;
+    return true;
+}, { message: "Paid courses must have a price greater than 0" });
 
 
 
@@ -151,13 +155,14 @@ adminRouter.post("/course/create", adminAuth, async function(req,res){
 
         const adminId = req.adminId;
 
-        const { title, description, price, imageUrl } = parsedData.data;
+        const { title, description, price, imageUrl, isFree } = parsedData.data;
 
         const course = await courseModel.create({
             title,
             description,
-            price,
+            price: isFree ? 0 : price,
             imageUrl,
+            isFree,
             creatorId: adminId
         });
 
@@ -207,11 +212,11 @@ adminRouter.put("/course/update/:courseId", adminAuth, async function(req,res){
             });
         }
 
-        const { title, description, price, imageUrl } = parsedData.data;
+        const { title, description, price, imageUrl, isFree } = parsedData.data;
 
         await courseModel.updateOne(
             { _id: courseId },
-            { title, description, price, imageUrl }
+            { title, description, price: isFree ? 0 : price, imageUrl, isFree }
         );
 
         res.json({

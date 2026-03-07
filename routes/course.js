@@ -1,11 +1,6 @@
 const express = require("express");
 const courseRouter = express.Router();
-const {userModel, adminModel, courseModel, purchaseModel} = require("../db/db");
-courseRouter.post("/purchase", function(req, res){
-    res.json({
-        message: "purchase endpoint"
-    });
-});
+const { courseModel } = require("../db/db");
 
 courseRouter.get("/preview", async function(req, res){
 

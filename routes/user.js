@@ -7,7 +7,7 @@ const jwt = require("jsonwebtoken");
 const USER_JWT_SECRET = process.env.USER_JWT_SECRET;
 
 const mongoose = require("mongoose");
-const { userModel, courseModel, purchaseModel } = require("../db/db");
+const { userModel, courseModel, enrollmentModel } = require("../db/db");
 const { userAuth } = require("../middleware/userAuth");
 
 const { z } = require("zod");
@@ -25,7 +25,7 @@ const signinSchema = z.object({
     password: z.string().min(6)
 });
 
-const purchaseSchema = z.object({
+const courseIdSchema = z.object({
     courseId: z.string().min(1)
 });
 
@@ -130,9 +130,9 @@ userRouter.post("/signin", async function(req, res){
 
 
 
-userRouter.post("/course/purchase", userAuth, async function(req, res){
+userRouter.post("/course/enroll", userAuth, async function(req, res){
 
-    const parsedData = purchaseSchema.safeParse(req.body);
+    const parsedData = courseIdSchema.safeParse(req.body);
 
     if(!parsedData.success){
         return res.status(400).json({
@@ -160,24 +160,99 @@ userRouter.post("/course/purchase", userAuth, async function(req, res){
             });
         }
 
-        const alreadyPurchased = await purchaseModel.findOne({
+        const alreadyEnrolled = await enrollmentModel.findOne({
             userId: userId,
             courseId: courseId
         });
 
-        if(alreadyPurchased){
+        if(alreadyEnrolled){
             return res.status(409).json({
-                message: "Course already purchased"
+                message: "Already enrolled in this course"
             });
         }
 
-        await purchaseModel.create({
+        if(course.isFree){
+            await enrollmentModel.create({
+                userId: userId,
+                courseId: courseId
+            });
+
+            return res.json({
+                message: "Enrolled in free course successfully"
+            });
+        }
+
+        res.json({
+            message: "This is a paid course, proceed to purchase",
+            courseId: course._id,
+            price: course.price,
+            paymentRequired: true
+        });
+
+    }catch(err){
+        res.status(500).json({
+            message: "Error enrolling in course"
+        });
+    }
+
+});
+
+
+
+userRouter.post("/course/purchase", userAuth, async function(req, res){
+
+    const parsedData = courseIdSchema.safeParse(req.body);
+
+    if(!parsedData.success){
+        return res.status(400).json({
+            message: "Invalid input",
+            errors: parsedData.error.issues
+        });
+    }
+
+    try{
+
+        const userId = req.userId;
+        const { courseId } = parsedData.data;
+
+        if(!mongoose.Types.ObjectId.isValid(courseId)){
+            return res.status(400).json({
+                message: "Invalid course ID"
+            });
+        }
+
+        const course = await courseModel.findById(courseId);
+
+        if(!course){
+            return res.status(404).json({
+                message: "Course not found"
+            });
+        }
+
+        if(course.isFree){
+            return res.status(400).json({
+                message: "This is a free course, use the enroll endpoint instead"
+            });
+        }
+
+        const alreadyEnrolled = await enrollmentModel.findOne({
+            userId: userId,
+            courseId: courseId
+        });
+
+        if(alreadyEnrolled){
+            return res.status(409).json({
+                message: "Already enrolled in this course"
+            });
+        }
+
+        await enrollmentModel.create({
             userId: userId,
             courseId: courseId
         });
 
         res.json({
-            message: "Course purchased successfully"
+            message: "Course purchased and enrolled successfully"
         });
 
     }catch(err){
@@ -190,17 +265,17 @@ userRouter.post("/course/purchase", userAuth, async function(req, res){
 
 
 
-userRouter.get("/purchases", userAuth, async function(req, res){
+userRouter.get("/my-courses", userAuth, async function(req, res){
 
     try{
 
         const userId = req.userId;
 
-        const purchases = await purchaseModel.find({
+        const enrollments = await enrollmentModel.find({
             userId: userId
         });
 
-        const courseIds = purchases.map(p => p.courseId);
+        const courseIds = enrollments.map(e => e.courseId);
 
         const courses = await courseModel.find({
             _id: { $in: courseIds }
@@ -213,7 +288,7 @@ userRouter.get("/purchases", userAuth, async function(req, res){
     }catch(err){
 
         res.status(500).json({
-            message: "Error fetching purchases"
+            message: "Error fetching my courses"
         });
 
     }
