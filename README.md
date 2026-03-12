@@ -6,15 +6,15 @@ The vision behind CourseCommons is to build a space where knowledge is **shared,
 
 ---
 
-## 🚀 Current Status
+##  Current Status
 
-⚠️ This project is **actively under development**.
+This project is **actively under development**.
 
 At the moment, only the **core backend foundation** has been implemented. Many planned features such as community interaction, announcements, and advanced course management are still in progress.
 
 ---
 
-## ✨ Planned Vision
+##  Planned Vision
 
 CourseCommons aims to become a **complete learning ecosystem**, including:
 
@@ -28,7 +28,7 @@ CourseCommons aims to become a **complete learning ecosystem**, including:
 
 ---
 
-## 📂 Project Structure
+##  Project Structure
 
 ```
 CourseCommons
@@ -48,7 +48,7 @@ CourseCommons
 
 ---
 
-## ⚙️ Features Implemented (So Far)
+##  Features Implemented (So Far)
 
 Currently implemented backend features:
 
@@ -64,7 +64,7 @@ These components form the **initial backend foundation** for the platform.
 
 ---
 
-## 🛠 Tech Stack
+##  Tech Stack
 
 * **Node.js**
 * **Express.js**
@@ -80,11 +80,11 @@ Future additions may include:
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 
 Contributions, suggestions, and improvements are welcome.
 
-## 👤 Author
+##  Author
 
 **Suresh Jakhar**
 
