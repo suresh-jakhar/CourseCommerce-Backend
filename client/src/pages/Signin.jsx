@@ -1,12 +1,16 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useSetAtom } from 'jotai'
-import { signin } from '../services/auth'
+import { getProfile, signin } from '../services/auth'
 import { authAtom } from '../state/authAtom'
+import { profileAtom } from '../state/profileAtom'
+import { enrolledCoursesAtom } from '../state/enrolledCoursesAtom'
 
 export default function Signin() {
   const navigate = useNavigate()
   const setAuth = useSetAtom(authAtom)
+  const setProfile = useSetAtom(profileAtom)
+  const setEnrolledCourses = useSetAtom(enrolledCoursesAtom)
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -24,6 +28,9 @@ export default function Signin() {
       const data = await signin(form)
       localStorage.setItem('token', data.token)
       setAuth({ token: data.token, isLoggedIn: true })
+      setEnrolledCourses([])
+      const user = await getProfile()
+      setProfile(user)
       navigate('/')
     } catch (err) {
       setError(err.response?.data?.message || 'Sign in failed. Please try again.')

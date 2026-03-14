@@ -2,15 +2,17 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAtom } from 'jotai'
 import { authAtom } from '../state/authAtom'
 import { enrolledCoursesAtom } from '../state/enrolledCoursesAtom'
+import { profileAtom } from '../state/profileAtom'
+import { clearLearnerSession } from '../state/sessionActions'
 
 export default function TopNav() {
   const navigate = useNavigate()
-  const [auth, setAuth] = useAtom(authAtom)
+  const [auth] = useAtom(authAtom)
+  const [profile] = useAtom(profileAtom)
   const [, setEnrolledCourses] = useAtom(enrolledCoursesAtom)
 
   function handleSignout() {
-    localStorage.removeItem('token')
-    setAuth({ token: null, isLoggedIn: false })
+    clearLearnerSession()
     setEnrolledCourses([])
     navigate('/')
   }
@@ -18,7 +20,14 @@ export default function TopNav() {
   return (
     <header className="h-14 border-b border-gray-800 bg-gray-950/95 backdrop-blur">
       <div className="h-full px-4 flex items-center justify-between">
-        <p className="text-sm font-semibold text-white">CourseCommons</p>
+        <div>
+          <p className="text-sm font-semibold text-white">CourseCommons</p>
+          {auth.isLoggedIn && profile && (
+            <p className="text-xs text-gray-400">
+              Signed in as {profile.firstName} {profile.lastName}
+            </p>
+          )}
+        </div>
         <nav className="flex items-center gap-5 text-sm">
           <Link to="/" className="text-blue-400 hover:text-blue-300">Home</Link>
           <Link to="/courses" className="text-blue-400 hover:text-blue-300">Courses</Link>
