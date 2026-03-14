@@ -9,3 +9,8 @@ export async function enrollInCourse(courseId) {
   const response = await api.post('/user/course/enroll', { courseId })
   return response.data
 }
+
+export async function purchaseCourse(courseId) {
+  const response = await api.post('/user/course/purchase', { courseId })
+  return response.data
+}

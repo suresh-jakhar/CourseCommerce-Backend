@@ -1,12 +1,22 @@
 import { useEffect, useState } from 'react'
-import { enrollInCourse, getCoursePreview } from '../services/course'
+import { enrollInCourse, getCoursePreview, purchaseCourse } from '../services/course'
+
+function getActionErrorMessage(err, fallbackMessage) {
+  const status = err.response?.status
+  const apiMessage = err.response?.data?.message
+
+  if (status === 401 || status === 403) {
+    return 'Your session is invalid or expired. Please sign in again.'
+  }
+
+  return apiMessage || fallbackMessage
+}
 
 export default function Courses() {
   const [courses, setCourses] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
-  const [enrollingCourseId, setEnrollingCourseId] = useState('')
-  const [courseFeedback, setCourseFeedback] = useState({})
+  const [courseActions, setCourseActions] = useState({})
 
   useEffect(() => {
     let isMounted = true
@@ -42,31 +52,86 @@ export default function Courses() {
   }, [])
 
   async function handleEnroll(courseId) {
-    setEnrollingCourseId(courseId)
-    setCourseFeedback((prev) => ({
+    setCourseActions((prev) => ({
       ...prev,
-      [courseId]: null,
+      [courseId]: {
+        status: 'enrolling',
+        type: 'info',
+        message: 'Enrolling in course...',
+      },
     }))
 
     try {
       const data = await enrollInCourse(courseId)
-      setCourseFeedback((prev) => ({
+
+      if (data.paymentRequired) {
+        setCourseActions((prev) => ({
+          ...prev,
+          [courseId]: {
+            status: 'purchase_required',
+            type: 'info',
+            message: data.message || 'Payment required before enrollment is complete.',
+          },
+        }))
+
+        return
+      }
+
+      setCourseActions((prev) => ({
         ...prev,
         [courseId]: {
-          type: data.paymentRequired ? 'info' : 'success',
-          message: data.message || 'Enrollment request completed.',
+          status: 'enrolled',
+          type: 'success',
+          message: data.message || 'Enrolled successfully.',
         },
       }))
     } catch (err) {
-      setCourseFeedback((prev) => ({
+      const apiStatus = err.response?.status
+
+      setCourseActions((prev) => ({
         ...prev,
         [courseId]: {
+          status: apiStatus === 409 ? 'already_enrolled' : 'idle',
           type: 'error',
-          message: err.response?.data?.message || 'Unable to enroll right now.',
+          message: getActionErrorMessage(err, 'Unable to enroll right now.'),
         },
       }))
-    } finally {
-      setEnrollingCourseId('')
+    }
+  }
+
+  async function handlePurchase(courseId) {
+    setCourseActions((prev) => ({
+      ...prev,
+      [courseId]: {
+        ...(prev[courseId] || {}),
+        status: 'purchasing',
+        type: 'info',
+        message: 'Purchasing course...',
+      },
+    }))
+
+    try {
+      const data = await purchaseCourse(courseId)
+
+      setCourseActions((prev) => ({
+        ...prev,
+        [courseId]: {
+          status: 'enrolled',
+          type: 'success',
+          message: data.message || 'Course purchased and enrolled successfully.',
+        },
+      }))
+    } catch (err) {
+      const apiStatus = err.response?.status
+
+      setCourseActions((prev) => ({
+        ...prev,
+        [courseId]: {
+          status: apiStatus === 409 ? 'already_enrolled' : 'purchase_required',
+          type: 'error',
+          message: getActionErrorMessage(err, 'Unable to purchase this course right now.'),
+        },
+      }))
     }
   }
 
@@ -135,26 +200,57 @@ export default function Courses() {
                 {course.isFree ? 'Free' : `Price: $${course.price}`}
               </p>
 
-              <button
-                type="button"
-                onClick={() => handleEnroll(course._id)}
-                disabled={enrollingCourseId === course._id}
-                className="w-full rounded-lg bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {enrollingCourseId === course._id ? 'Enrolling...' : 'Enroll'}
-              </button>
+              {(() => {
+                const action = courseActions[course._id] || { status: 'idle' }
 
-              {courseFeedback[course._id] && (
+                if (action.status === 'enrolled' || action.status === 'already_enrolled') {
+                  return (
+                    <button
+                      type="button"
+                      disabled
+                      className="w-full rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-2 text-sm font-semibold text-emerald-300"
+                    >
+                      Enrolled
+                    </button>
+                  )
+                }
+
+                if (action.status === 'purchase_required' || action.status === 'purchasing') {
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => handlePurchase(course._id)}
+                      disabled={action.status === 'purchasing'}
+                      className="w-full rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-black hover:bg-amber-400 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {action.status === 'purchasing' ? 'Purchasing...' : 'Purchase'}
+                    </button>
+                  )
+                }
+
+                return (
+                  <button
+                    type="button"
+                    onClick={() => handleEnroll(course._id)}
+                    disabled={action.status === 'enrolling'}
+                    className="w-full rounded-lg bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {action.status === 'enrolling' ? 'Enrolling...' : 'Enroll'}
+                  </button>
+                )
+              })()}
+
+              {courseActions[course._id]?.message && (
                 <p
                   className={`text-sm ${
-                    courseFeedback[course._id].type === 'error'
+                    courseActions[course._id].type === 'error'
                       ? 'text-red-300'
-                      : courseFeedback[course._id].type === 'info'
+                      : courseActions[course._id].type === 'info'
                         ? 'text-amber-300'
                         : 'text-emerald-300'
                   }`}
                 >
-                  {courseFeedback[course._id].message}
+                  {courseActions[course._id].message}
                 </p>
               )}
             </div>
