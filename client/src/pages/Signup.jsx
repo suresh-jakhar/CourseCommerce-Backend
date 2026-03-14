@@ -1,37 +1,26 @@
-import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
-import { signup } from '../services/auth'
+import { Link, Navigate } from 'react-router-dom'
+import { useAtomValue } from 'jotai'
+import { adminAuthAtom } from '../state/adminAuthAtom'
+import { authAtom } from '../state/authAtom'
 
 export default function Signup() {
-  const navigate = useNavigate()
-  const [form, setForm] = useState({ firstName: '', lastName: '', email: '', password: '' })
-  const [error, setError] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+  const learnerAuth = useAtomValue(authAtom)
+  const instructorAuth = useAtomValue(adminAuthAtom)
 
-  function handleChange(e) {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+  if (learnerAuth.isLoggedIn) {
+    return <Navigate to="/" replace />
   }
 
-  async function handleSubmit(e) {
-    e.preventDefault()
-    setError('')
-    setIsLoading(true)
-
-    try {
-      await signup(form)
-      navigate('/signin')
-    } catch (err) {
-      setError(err.response?.data?.message || 'Signup failed. Please try again.')
-    } finally {
-      setIsLoading(false)
-    }
+  if (instructorAuth.isLoggedIn) {
+    return <Navigate to="/instructor/courses" replace />
   }
 
   return (
     <div className="flex min-h-full items-center justify-center px-6 py-16">
-      <div className="w-full max-w-md space-y-8">
+      <div className="w-full max-w-4xl space-y-10">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-white">Create your account</h1>
+          <p className="text-sm font-medium uppercase tracking-[0.2em] text-blue-400">Choose account type</p>
+          <h1 className="mt-3 text-4xl font-bold text-white">Sign up as a learner or instructor</h1>
           <p className="mt-2 text-sm text-gray-400">
             Already have an account?{' '}
             <Link to="/signin" className="text-blue-400 hover:text-blue-300">
@@ -40,90 +29,31 @@ export default function Signup() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="firstName" className="block text-sm font-medium text-gray-300 mb-1.5">
-                First name
-              </label>
-              <input
-                id="firstName"
-                name="firstName"
-                type="text"
-                required
-                minLength={2}
-                value={form.firstName}
-                onChange={handleChange}
-                className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none"
-                placeholder="John"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="lastName" className="block text-sm font-medium text-gray-300 mb-1.5">
-                Last name
-              </label>
-              <input
-                id="lastName"
-                name="lastName"
-                type="text"
-                required
-                minLength={2}
-                value={form.lastName}
-                onChange={handleChange}
-                className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none"
-                placeholder="Doe"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1.5">
-              Email address
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              required
-              value={form.email}
-              onChange={handleChange}
-              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none"
-              placeholder="john@example.com"
-            />
-          </div>
-
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1.5">
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              minLength={6}
-              value={form.password}
-              onChange={handleChange}
-              className="w-full rounded-lg border border-gray-700 bg-gray-900 px-4 py-2.5 text-sm text-white placeholder-gray-500 focus:border-blue-500 focus:outline-none"
-              placeholder="At least 6 characters"
-            />
-          </div>
-
-          {error && (
-            <p className="rounded-lg bg-red-500/10 border border-red-500/30 px-4 py-3 text-sm text-red-300">
-              {error}
-            </p>
-          )}
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full rounded-lg bg-blue-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
+        <div className="grid gap-6 md:grid-cols-2">
+          <Link
+            to="/signup/learner"
+            className="rounded-3xl border border-gray-800 bg-gray-900/60 p-8 transition hover:border-blue-500/60 hover:bg-gray-900"
           >
-            {isLoading ? 'Creating account...' : 'Create account'}
-          </button>
-        </form>
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-blue-400">Learner</p>
+            <h2 className="mt-4 text-2xl font-semibold text-white">Join to enroll and keep learning</h2>
+            <p className="mt-3 text-sm leading-6 text-gray-300">
+              Create a learner account to browse courses, enroll, and track your learning dashboard.
+            </p>
+            <span className="mt-6 inline-flex text-sm font-semibold text-blue-300">Continue as learner</span>
+          </Link>
+
+          <Link
+            to="/signup/instructor"
+            className="rounded-3xl border border-gray-800 bg-gray-900/60 p-8 transition hover:border-blue-500/60 hover:bg-gray-900"
+          >
+            <p className="text-sm font-medium uppercase tracking-[0.2em] text-blue-400">Instructor</p>
+            <h2 className="mt-4 text-2xl font-semibold text-white">Create and manage your own courses</h2>
+            <p className="mt-3 text-sm leading-6 text-gray-300">
+              Set up an instructor account to publish, edit, and manage your course catalog.
+            </p>
+            <span className="mt-6 inline-flex text-sm font-semibold text-blue-300">Continue as instructor</span>
+          </Link>
+        </div>
       </div>
     </div>
   )
