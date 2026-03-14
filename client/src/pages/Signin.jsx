@@ -1,9 +1,12 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { useSetAtom } from 'jotai'
 import { signin } from '../services/auth'
+import { authAtom } from '../state/authAtom'
 
 export default function Signin() {
   const navigate = useNavigate()
+  const setAuth = useSetAtom(authAtom)
   const [form, setForm] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -20,6 +23,7 @@ export default function Signin() {
     try {
       const data = await signin(form)
       localStorage.setItem('token', data.token)
+      setAuth({ token: data.token, isLoggedIn: true })
       navigate('/')
     } catch (err) {
       setError(err.response?.data?.message || 'Sign in failed. Please try again.')
