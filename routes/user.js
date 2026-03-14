@@ -166,8 +166,9 @@ userRouter.post("/course/enroll", userAuth, async function(req, res){
         });
 
         if(alreadyEnrolled){
-            return res.status(409).json({
-                message: "Already enrolled in this course"
+            return res.json({
+                message: "Already enrolled in this course",
+                alreadyEnrolled: true
             });
         }
 
@@ -241,8 +242,9 @@ userRouter.post("/course/purchase", userAuth, async function(req, res){
         });
 
         if(alreadyEnrolled){
-            return res.status(409).json({
-                message: "Already enrolled in this course"
+            return res.json({
+                message: "Already enrolled in this course",
+                alreadyEnrolled: true
             });
         }
 
