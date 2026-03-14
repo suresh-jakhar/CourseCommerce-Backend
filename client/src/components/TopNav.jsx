@@ -1,14 +1,17 @@
 import { Link, useNavigate } from 'react-router-dom'
 import { useAtom } from 'jotai'
 import { authAtom } from '../state/authAtom'
+import { enrolledCoursesAtom } from '../state/enrolledCoursesAtom'
 
 export default function TopNav() {
   const navigate = useNavigate()
   const [auth, setAuth] = useAtom(authAtom)
+  const [, setEnrolledCourses] = useAtom(enrolledCoursesAtom)
 
   function handleSignout() {
     localStorage.removeItem('token')
     setAuth({ token: null, isLoggedIn: false })
+    setEnrolledCourses([])
     navigate('/')
   }
 
