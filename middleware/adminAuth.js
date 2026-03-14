@@ -4,13 +4,17 @@ const ADMIN_JWT_SECRET = process.env.ADMIN_JWT_SECRET;
 
 function adminAuth(req, res, next){
 
-    const token = req.headers.authorization;
+    const authHeader = req.headers.authorization;
 
-    if(!token){
+    if(!authHeader){
         return res.status(401).json({
             message: "Token missing"
         });
     }
+
+    const token = authHeader.startsWith("Bearer ")
+        ? authHeader.slice(7)
+        : authHeader;
 
     try{
 
