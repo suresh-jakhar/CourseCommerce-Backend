@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { enrollInCourse, getCoursePreview, purchaseCourse } from '../services/course'
+import { enrollInCourse, getCoursePreview, getMyCourses, purchaseCourse } from '../services/course'
 
 function getActionErrorMessage(err, fallbackMessage) {
   const status = err.response?.status
@@ -24,12 +24,27 @@ export default function Courses() {
     async function loadCourses() {
       try {
         const previewCourses = await getCoursePreview()
+        const enrolledCourses = await getMyCourses().catch(() => [])
 
         if (!isMounted) {
           return
         }
 
         setCourses(previewCourses)
+        const enrolledCourseIds = new Set(enrolledCourses.map((course) => String(course._id)))
+        const initialActions = {}
+
+        previewCourses.forEach((course) => {
+          if (enrolledCourseIds.has(String(course._id))) {
+            initialActions[course._id] = {
+              status: 'enrolled',
+              type: 'success',
+              message: 'Already enrolled in this course',
+            }
+          }
+        })
+
+        setCourseActions(initialActions)
         setError('')
       } catch (err) {
         if (!isMounted) {
@@ -63,6 +78,19 @@ export default function Courses() {
 
     try {
       const data = await enrollInCourse(courseId)
+
+      if (data.alreadyEnrolled) {
+        setCourseActions((prev) => ({
+          ...prev,
+          [courseId]: {
+            status: 'already_enrolled',
+            type: 'success',
+            message: data.message || 'Already enrolled in this course',
+          },
+        }))
+
+        return
+      }
 
       if (data.paymentRequired) {
         setCourseActions((prev) => ({
@@ -112,6 +140,19 @@ export default function Courses() {
 
     try {
       const data = await purchaseCourse(courseId)
+
+      if (data.alreadyEnrolled) {
+        setCourseActions((prev) => ({
+          ...prev,
+          [courseId]: {
+            status: 'already_enrolled',
+            type: 'success',
+            message: data.message || 'Already enrolled in this course',
+          },
+        }))
+
+        return
+      }
 
       setCourseActions((prev) => ({
         ...prev,
