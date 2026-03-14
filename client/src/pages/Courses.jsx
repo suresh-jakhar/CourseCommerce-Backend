@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
+import { useAtom } from 'jotai'
 import { enrollInCourse, getCoursePreview, getMyCourses, purchaseCourse } from '../services/course'
+import { enrolledCoursesAtom } from '../state/enrolledCoursesAtom'
 
 function getActionErrorMessage(err, fallbackMessage) {
   const status = err.response?.status
@@ -17,6 +19,23 @@ export default function Courses() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [courseActions, setCourseActions] = useState({})
+  const [enrolledCourses, setEnrolledCourses] = useAtom(enrolledCoursesAtom)
+
+  function syncEnrolledCourse(courseId) {
+    const matchedCourse = courses.find((course) => course._id === courseId)
+
+    if (!matchedCourse) {
+      return
+    }
+
+    setEnrolledCourses((prev) => {
+      if (prev.some((course) => course._id === courseId)) {
+        return prev
+      }
+
+      return [...prev, matchedCourse]
+    })
+  }
 
   useEffect(() => {
     let isMounted = true
@@ -24,14 +43,24 @@ export default function Courses() {
     async function loadCourses() {
       try {
         const previewCourses = await getCoursePreview()
-        const enrolledCourses = await getMyCourses().catch(() => [])
+        const enrolledCoursesFromApi = await getMyCourses().catch((err) => {
+          const status = err.response?.status
+
+          if (status === 401 || status === 403) {
+            throw err
+          }
+
+          return []
+        })
 
         if (!isMounted) {
           return
         }
 
         setCourses(previewCourses)
-        const enrolledCourseIds = new Set(enrolledCourses.map((course) => String(course._id)))
+        setEnrolledCourses(enrolledCoursesFromApi)
+        const fallbackEnrolledCourses = enrolledCoursesFromApi.length > 0 ? enrolledCoursesFromApi : enrolledCourses
+        const enrolledCourseIds = new Set(fallbackEnrolledCourses.map((course) => String(course._id)))
         const initialActions = {}
 
         previewCourses.forEach((course) => {
@@ -80,6 +109,7 @@ export default function Courses() {
       const data = await enrollInCourse(courseId)
 
       if (data.alreadyEnrolled) {
+        syncEnrolledCourse(courseId)
         setCourseActions((prev) => ({
           ...prev,
           [courseId]: {
@@ -113,6 +143,7 @@ export default function Courses() {
           message: data.message || 'Enrolled successfully.',
         },
       }))
+      syncEnrolledCourse(courseId)
     } catch (err) {
       const apiStatus = err.response?.status
 
@@ -142,6 +173,7 @@ export default function Courses() {
       const data = await purchaseCourse(courseId)
 
       if (data.alreadyEnrolled) {
+        syncEnrolledCourse(courseId)
         setCourseActions((prev) => ({
           ...prev,
           [courseId]: {
@@ -162,6 +194,7 @@ export default function Courses() {
           message: data.message || 'Course purchased and enrolled successfully.',
         },
       }))
+      syncEnrolledCourse(courseId)
     } catch (err) {
       const apiStatus = err.response?.status
 
