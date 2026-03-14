@@ -5,6 +5,7 @@ import Community from './pages/Community'
 import Channels from './pages/Channels'
 import Announcements from './pages/Announcements'
 import Signup from './pages/Signup'
+import Signin from './pages/Signin'
 import AppShell from './components/AppShell'
 
 function App() {
@@ -17,6 +18,7 @@ function App() {
         <Route path="/channels" element={<Channels />} />
         <Route path="/announcements" element={<Announcements />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/signin" element={<Signin />} />
       </Routes>
     </AppShell>
   )
