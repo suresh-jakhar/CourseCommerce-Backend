@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
-import { getCoursePreview } from '../services/course'
+import { enrollInCourse, getCoursePreview } from '../services/course'
 
 export default function Courses() {
   const [courses, setCourses] = useState([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const [enrollingCourseId, setEnrollingCourseId] = useState('')
+  const [courseFeedback, setCourseFeedback] = useState({})
 
   useEffect(() => {
     let isMounted = true
@@ -38,6 +40,35 @@ export default function Courses() {
       isMounted = false
     }
   }, [])
+
+  async function handleEnroll(courseId) {
+    setEnrollingCourseId(courseId)
+    setCourseFeedback((prev) => ({
+      ...prev,
+      [courseId]: null,
+    }))
+
+    try {
+      const data = await enrollInCourse(courseId)
+      setCourseFeedback((prev) => ({
+        ...prev,
+        [courseId]: {
+          type: data.paymentRequired ? 'info' : 'success',
+          message: data.message || 'Enrollment request completed.',
+        },
+      }))
+    } catch (err) {
+      setCourseFeedback((prev) => ({
+        ...prev,
+        [courseId]: {
+          type: 'error',
+          message: err.response?.data?.message || 'Unable to enroll right now.',
+        },
+      }))
+    } finally {
+      setEnrollingCourseId('')
+    }
+  }
 
   if (isLoading) {
     return (
@@ -103,6 +134,29 @@ export default function Courses() {
               <p className="text-sm font-medium text-blue-300">
                 {course.isFree ? 'Free' : `Price: $${course.price}`}
               </p>
+
+              <button
+                type="button"
+                onClick={() => handleEnroll(course._id)}
+                disabled={enrollingCourseId === course._id}
+                className="w-full rounded-lg bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-400 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {enrollingCourseId === course._id ? 'Enrolling...' : 'Enroll'}
+              </button>
+
+              {courseFeedback[course._id] && (
+                <p
+                  className={`text-sm ${
+                    courseFeedback[course._id].type === 'error'
+                      ? 'text-red-300'
+                      : courseFeedback[course._id].type === 'info'
+                        ? 'text-amber-300'
+                        : 'text-emerald-300'
+                  }`}
+                >
+                  {courseFeedback[course._id].message}
+                </p>
+              )}
             </div>
           </article>
         ))}

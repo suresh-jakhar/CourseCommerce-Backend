@@ -4,3 +4,8 @@ export async function getCoursePreview() {
   const response = await api.get('/course/preview')
   return response.data.courses ?? []
 }
+
+export async function enrollInCourse(courseId) {
+  const response = await api.post('/user/course/enroll', { courseId })
+  return response.data
+}
