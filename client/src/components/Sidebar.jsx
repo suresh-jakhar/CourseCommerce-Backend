@@ -9,7 +9,7 @@ export default function Sidebar() {
           <Link to="/" className="hover:text-blue-300">Dashboard</Link>
         </li>
         <li>
-          <Link to="/courses" className="hover:text-blue-300">My Courses</Link>
+          <Link to="/my-courses" className="hover:text-blue-300">My Courses</Link>
         </li>
         <li>
           <Link to="/community" className="hover:text-blue-300">Community</Link>

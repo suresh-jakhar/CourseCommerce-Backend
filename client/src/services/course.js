@@ -14,3 +14,8 @@ export async function purchaseCourse(courseId) {
   const response = await api.post('/user/course/purchase', { courseId })
   return response.data
 }
+
+export async function getMyCourses() {
+  const response = await api.get('/user/my-courses')
+  return response.data.courses ?? []
+}

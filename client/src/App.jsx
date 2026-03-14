@@ -4,6 +4,7 @@ import Courses from './pages/Courses'
 import Community from './pages/Community'
 import Channels from './pages/Channels'
 import Announcements from './pages/Announcements'
+import MyCourses from './pages/MyCourses'
 import Signup from './pages/Signup'
 import Signin from './pages/Signin'
 import AppShell from './components/AppShell'
@@ -19,6 +20,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Courses />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/my-courses"
+          element={
+            <ProtectedRoute>
+              <MyCourses />
             </ProtectedRoute>
           }
         />
